@@ -115,29 +115,31 @@ def asignar_expediente(expediente_id: int, persona_id: int, db: Session = Depend
 @router.put("/{expediente_id}/finalizar")
 def finalizar_expediente(expediente_id: int, db: Session = Depends(get_db)):
 
+    # 1. Buscar expediente
     expediente = db.query(Expediente).get(expediente_id)
-
     if not expediente:
-        return {"error": "No existe"}
+        raise HTTPException(status_code=404, detail="Expediente no existe")
 
-    # cerrar asignación activa
-    actual = db.query(ExpedientePersona)\
+    # 2. Marcar como inactivo
+    expediente.activo = False
+    expediente.fecha_finalizacion = date.today()
+
+    # 3. Cerrar asignación activa
+    asignacion = db.query(ExpedientePersona)\
         .filter(
             ExpedientePersona.expediente_id == expediente_id,
             ExpedientePersona.fecha_fin == None
         ).first()
 
-    if actual:
-        actual.fecha_fin = date.today()
-
-    # marcar como finalizado
-    expediente.activo = False
-    expediente.estado = "finalizado"
-    expediente.fecha_finalizacion = date.today()
+    if asignacion:
+        asignacion.fecha_fin = date.today()
 
     db.commit()
 
-    return {"msg": "Expediente finalizado"}
+    return {
+        "msg": "Expediente finalizado correctamente",
+        "expediente_id": expediente_id
+    }
 
 @router.get("/estadisticas")
 def estadisticas(db: Session = Depends(get_db)):
