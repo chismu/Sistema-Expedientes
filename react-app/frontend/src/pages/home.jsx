@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { getExpedientes } from "../api/api";
-// import ExpedientesTable from "../components/ExpedientesTable";
+import ExpedientesTable from "../components/ExpedientesTable";
+import ExpedienteForm from "../components/ExpedienteForm";
 
 export default function Home() {
-  console.log("Home render");
+    const tableRef = useRef();
+   return (
+        <div className="container mt-4">
+            <h2 className="mb-4">Sistema de Expedientes</h2>
 
-  return (
-    <div className="container">
-      <h1>Home cargando</h1>
-    </div>
-  );
+            <ExpedienteForm onCreated={() => window.location.reload()} />
+
+            <ExpedientesTable ref={tableRef} />
+        </div>
+    );
 }

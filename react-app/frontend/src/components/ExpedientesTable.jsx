@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
-import { getExpedientes, finalizarExpediente } from "../api/api";
+import { 
+    getExpedientes, 
+    finalizarExpediente, 
+    asignarExpediente, 
+    getPersonas 
+} from "../api/api";
 
 export default function ExpedientesTable() {
     const [expedientes, setExpedientes] = useState([]);
+    const [personas, setPersonas] = useState([]);
 
     const cargar = async () => {
         const data = await getExpedientes();
         setExpedientes(data);
     };
 
+    const cargarPersonas = async () => {
+        const data = await getPersonas();
+        setPersonas(data);
+    };
+
     useEffect(() => {
         cargar();
+        cargarPersonas();
     }, []);
 
     const getColorClass = (color) => {
@@ -24,14 +36,21 @@ export default function ExpedientesTable() {
         cargar();
     };
 
+    const asignar = async (id, persona_id) => {
+        if (!persona_id) return;
+        await asignarExpediente(id, persona_id);
+        cargar();
+    };
+
     return (
-        <table className="table">
+        <table className="table table-bordered">
             <thead>
                 <tr>
-                    <th>Número</th>
+                    <th>N°</th>
                     <th>Carátula</th>
                     <th>Días</th>
                     <th>Estado</th>
+                    <th>Asignar</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -41,7 +60,30 @@ export default function ExpedientesTable() {
                         <td>{e.numero}</td>
                         <td>{e.caratula}</td>
                         <td>{e.dias_sin_mover}</td>
-                        <td>{e.color}</td>
+                        <td>
+                            <span className="badge bg-dark">
+                                {e.color.toUpperCase()}
+                            </span>
+                        </td>
+
+                        {/* SELECT PERSONAS */}
+                        <td>
+                            <select
+                                className="form-select"
+                                onChange={(ev) =>
+                                    asignar(e.id, ev.target.value)
+                                }
+                            >
+                                <option value="">Asignar...</option>
+                                {personas.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </td>
+
+                        {/* BOTONES */}
                         <td>
                             <button
                                 className="btn btn-danger btn-sm"
