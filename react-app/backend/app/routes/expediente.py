@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from app.database import get_db
+from app.models import Expediente, ExpedientePersona, Persona
 from datetime import date
 from app.models import Persona
-from app.database import get_db
-from app.models import Expediente, ExpedientePersona
 from app.utils.fechas import dias_habiles, calcular_color
 from app.schemas.expediente import ExpedienteCreate
 
@@ -46,11 +47,15 @@ def calcular_color(fecha_ingreso):
     
 @router.get("/")
 def listar_expedientes(db: Session = Depends(get_db)):
-    expedientes = db.query(Expediente).filter(Expediente.activo == True).all()
+
+    expedientes = db.query(Expediente)\
+        .filter(Expediente.activo == True)\
+        .all()
 
     resultado = []
 
     for e in expedientes:
+        dias = dias_habiles(e.fecha_ingreso)
         color = calcular_color(e.fecha_ingreso)
 
         resultado.append({
@@ -58,38 +63,54 @@ def listar_expedientes(db: Session = Depends(get_db)):
             "numero": e.numero_expediente,
             "caratula": e.caratula,
             "fecha_ingreso": e.fecha_ingreso,
+            "dias_sin_mover": dias,
             "color": color
         })
 
-    # ordenar: rojo, amarillo, verde
     orden = {"rojo": 1, "amarillo": 2, "verde": 3}
     resultado.sort(key=lambda x: orden[x["color"]])
 
     return resultado
 
 @router.put("/{expediente_id}/asignar")
-def asignar_persona(expediente_id: int, persona_id: int, db: Session = Depends(get_db)):
+def asignar_expediente(expediente_id: int, persona_id: int, db: Session = Depends(get_db)):
 
-    # cerrar asignación actual
-    actual = db.query(ExpedientePersona)\
+    # 1. Verificar que el expediente exista
+    expediente = db.query(Expediente).get(expediente_id)
+    if not expediente:
+        raise HTTPException(status_code=404, detail="Expediente no existe")
+
+    # 2. Verificar que la persona exista
+    persona = db.query(Persona).get(persona_id)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona no existe")
+
+    # 3. Buscar asignación activa
+    asignacion_actual = db.query(ExpedientePersona)\
         .filter(
             ExpedientePersona.expediente_id == expediente_id,
             ExpedientePersona.fecha_fin == None
         ).first()
 
-    if actual:
-        actual.fecha_fin = date.today()
+    # 4. Cerrar asignación anterior
+    if asignacion_actual:
+        asignacion_actual.fecha_fin = date.today()
 
-    # nueva asignación
-    nueva = ExpedientePersona(
+    # 5. Crear nueva asignación
+    nueva_asignacion = ExpedientePersona(
         expediente_id=expediente_id,
-        persona_id=persona_id
+        persona_id=persona_id,
+        fecha_asignacion=date.today()
     )
 
-    db.add(nueva)
+    db.add(nueva_asignacion)
     db.commit()
 
-    return {"msg": "Asignación actualizada"}
+    return {
+        "msg": "Expediente reasignado correctamente",
+        "expediente_id": expediente_id,
+        "persona_id": persona_id
+    }
 
 @router.put("/{expediente_id}/finalizar")
 def finalizar_expediente(expediente_id: int, db: Session = Depends(get_db)):

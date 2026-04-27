@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import expediente
+from app.routes import expediente, persona
+
 
 app = FastAPI()
 
@@ -17,3 +18,5 @@ app.add_middleware(
 )
 
 app.include_router(expediente.router)
+app.include_router(expediente.router)
+app.include_router(persona.router)
