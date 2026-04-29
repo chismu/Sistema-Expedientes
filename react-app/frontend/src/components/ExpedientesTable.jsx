@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { 
-    getExpedientes, 
-    finalizarExpediente, 
-    asignarExpediente, 
-    getPersonas 
+import {
+    getExpedientes,
+    finalizarExpediente,
+    asignarExpediente,
+    getPersonas
 } from "../api/api";
 
 export default function ExpedientesTable() {
@@ -68,19 +68,21 @@ export default function ExpedientesTable() {
 
                         {/* SELECT PERSONAS */}
                         <td>
-                            <select
-                                className="form-select"
-                                onChange={(ev) =>
-                                    asignar(e.id, ev.target.value)
-                                }
-                            >
-                                <option value="">Asignar...</option>
-                                {personas.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.nombre}
-                                    </option>
-                                ))}
-                            </select>
+                            {e.responsable ? (
+                                <span className="badge bg-primary">{e.responsable}</span>
+                            ) : (
+                                <select
+                                    className="form-select"
+                                    onChange={(ev) => asignar(e.id, ev.target.value)}
+                                >
+                                    <option value="">Asignar...</option>
+                                    {personas.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </td>
 
                         {/* BOTONES */}
@@ -90,6 +92,12 @@ export default function ExpedientesTable() {
                                 onClick={() => finalizar(e.id)}
                             >
                                 Finalizar
+                            </button>
+                            <button
+                                className="btn btn-warning btn-sm me-2"
+                                onClick={() => abrirEdicion(e)}
+                            >
+                                Editar
                             </button>
                         </td>
                     </tr>

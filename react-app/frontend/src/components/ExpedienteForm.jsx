@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { crearExpediente, getPersonas } from "../api/api";
 
-export default function ExpedienteForm({ onCreated }) {
+export default function ExpedienteForm({ expediente, onCreated }) {
+
     const [personas, setPersonas] = useState([]);
 
     const [form, setForm] = useState({
@@ -29,12 +30,22 @@ export default function ExpedienteForm({ onCreated }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        await crearExpediente({
-            ...form,
-            persona_id: Number(form.persona_id)
-        });
+        if (expediente) {
+            // 🔥 EDITAR
+            await fetch(`http://127.0.0.1:8000/expedientes/${expediente.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form)
+            });
+        } else {
+            // 🔥 CREAR
+            await crearExpediente({
+                ...form,
+                persona_id: Number(form.persona_id)
+            });
+        }
 
-        // limpiar form
+        // limpiar
         setForm({
             numero_expediente: "",
             caratula: "",
@@ -42,9 +53,14 @@ export default function ExpedienteForm({ onCreated }) {
             persona_id: ""
         });
 
-        // refrescar tabla
         if (onCreated) onCreated();
     };
+
+    useEffect(() => {
+        if (expediente) {
+            setForm(expediente);
+        }
+    }, [expediente]);
 
     return (
         <form onSubmit={handleSubmit} className="card p-3 mb-4">
@@ -91,10 +107,50 @@ export default function ExpedienteForm({ onCreated }) {
                     </option>
                 ))}
             </select>
+            <input
+                className="form-control mb-2"
+                name="estado"
+                placeholder="Estado"
+                value={form.estado || ""}
+                onChange={handleChange}
+            />
+
+            <input
+                className="form-control mb-2"
+                name="tipo"
+                placeholder="Tipo"
+                value={form.tipo || ""}
+                onChange={handleChange}
+            />
+
+            <input
+                type="date"
+                className="form-control mb-2"
+                name="fecha_limite"
+                value={form.fecha_limite || ""}
+                onChange={handleChange}
+            />
+
+            <textarea
+                className="form-control mb-2"
+                name="accion"
+                placeholder="Acción"
+                value={form.accion || ""}
+                onChange={handleChange}
+            />
+
+            <textarea
+                className="form-control mb-2"
+                name="observaciones"
+                placeholder="Observaciones"
+                value={form.observaciones || ""}
+                onChange={handleChange}
+            />
 
             <button className="btn btn-primary">
                 Crear Expediente
             </button>
+
         </form>
     );
 }

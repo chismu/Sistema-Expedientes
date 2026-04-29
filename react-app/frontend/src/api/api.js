@@ -33,3 +33,7 @@ export const finalizarExpediente = async (id) => {
     return res.json();
 };
 
+export const getEstadisticas = async () => {
+    const res = await fetch("http://127.0.0.1:8000/personas/estadisticas");
+    return res.json();
+};

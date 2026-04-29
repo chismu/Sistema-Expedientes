@@ -13,12 +13,19 @@ def dias_habiles(fecha_inicio):
     return dias
 
 
-def calcular_color(fecha_ingreso):
-    dias = dias_habiles(fecha_ingreso)
+from datetime import date
 
-    if dias >= 55:
-        return "rojo"
-    elif dias >= 30:
-        return "amarillo"
+def calcular_estado(fecha_ingreso):
+    hoy = date.today()
+    dias = (hoy - fecha_ingreso).days
+
+    if dias < 30:
+        return "verde", "baja", dias
+    elif dias < 45:
+        return "amarillo", "media", dias
+    elif dias < 55:
+        return "naranja", "alta", dias
+    elif dias < 60:
+        return "rojo", "urgente", dias
     else:
-        return "verde"
+        return "rojo_oscuro", "critica", dias
